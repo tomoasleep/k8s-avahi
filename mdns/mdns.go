@@ -1,4 +1,4 @@
-package controller
+package mdns
 
 import (
 	"net"
@@ -48,26 +48,56 @@ const (
 	AVAHI_IF_UNSPEC = int32(-1) /**< Unspecified/all interface(s) */
 )
 
+// MdnsClientOption is a MdnsClient option.
+type MdnsClientOption func(m *MdnsClient) error
+
+// WithDbus sets the server using the specified dbus connection.
+func WithDbusConn(conn *dbus.Conn) MdnsClientOption {
+	return func(m *MdnsClient) error {
+		server, err := avahi.ServerNew(conn)
+		if err != nil {
+			return err
+		}
+
+		m.server = server
+		return nil
+	}
+}
+
+// WithDbus sets the server using the system bus.
+func WithSystemBus() MdnsClientOption {
+	return func(m *MdnsClient) error {
+		conn, err := dbus.SystemBus()
+		if err != nil {
+			return err
+		}
+
+		server, err := avahi.ServerNew(conn)
+		if err != nil {
+			return err
+		}
+
+		m.server = server
+		return nil
+	}
+}
+
 // NewClient creates MdnsClient
-func NewClient() (*MdnsClient, error) {
-	conn, err := dbus.SystemBus()
+func NewClient(opts ...MdnsClientOption) (*MdnsClient, error) {
+	m := new(MdnsClient)
+	for _, opt := range opts {
+		if err := opt(m); err != nil {
+			return nil, err
+		}
+	}
+
+	entryGroup, err := m.server.EntryGroupNew()
 	if err != nil {
 		return nil, err
 	}
+	m.entryGroup = entryGroup
 
-	server, err := avahi.ServerNew(conn)
-	if err != nil {
-		return nil, err
-	}
-
-	entryGroup, err := server.EntryGroupNew()
-	if err != nil {
-		return nil, err
-	}
-
-	return &MdnsClient{
-		server, entryGroup, map[string]*Service{}, map[string]*Record{},
-	}, nil
+	return m, nil
 }
 
 // Close closes the connection to avahi

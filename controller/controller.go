@@ -7,6 +7,7 @@ import (
 	"net"
 
 	"github.com/go-logr/logr"
+	"github.com/tomoasleep/k8s-avahi/mdns"
 	networkingv1 "k8s.io/api/networking/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -15,7 +16,7 @@ import (
 type Controller struct {
 	client.Client
 	Log        logr.Logger
-	MdnsClient *MdnsClient
+	MdnsClient *mdns.MdnsClient
 }
 
 type Target struct {

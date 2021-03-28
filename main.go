@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/tomoasleep/k8s-avahi/controller"
+	"github.com/tomoasleep/k8s-avahi/mdns"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
@@ -26,7 +27,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	cli, err := controller.NewClient()
+	cli, err := mdns.NewClient(mdns.WithSystemBus())
 	if err != nil {
 		log.Error(err, "unable to start clien")
 		os.Exit(1)
